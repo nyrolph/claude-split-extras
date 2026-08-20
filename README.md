@@ -22,6 +22,33 @@ Nothing tracked here may contain a split name, a client/company name, or a perso
 
 **You carry `local/` between machines yourself** (password manager, encrypted drive — anything you trust; never this repo). Without it, everything still installs; you just re-enter your pins and lists by hand following this README.
 
+**`local/` is also the commit key.** `check-clean.ps1` refuses to bless an unscanned tree, so with `local/forbidden.txt` absent the pre-commit hook blocks every commit. It is fine (even sensible) to keep `local/` off the machine day-to-day: restore your saved copy into the clone when you need to commit, commit, remove it again.
+
+### local/ file formats
+
+`local/local-config.json` — everything `install.ps1` reconstructs on a machine (all values below are placeholders; use your real ones):
+
+```json
+{
+  "splits": ["clienta", "clientb"],
+  "pins": {
+    "D:\\Clients\\Acme": "clienta",
+    "X:\\AliasOfClients\\Acme": "clienta",
+    "D:\\Clients\\Globex": "clientb"
+  },
+  "excludePlugins": ["some-work-plugin"],
+  "denyLists": {
+    "home": [],
+    "clienta": ["Read(//d/Clients/Globex/**)"],
+    "clientb": ["Read(//d/Clients/Acme/**)", "Read(//x/AliasOfClients/Acme/**)"]
+  }
+}
+```
+
+`splits`: every split name (profiles under `~/.claude-splits`). `pins`: folder -> split, exactly the shape of `folders.json`; include subst-alias spellings as separate pins. `excludePlugins`: plugin/marketplace name fragments never seeded into new splits (written to `extras.json`). `denyLists`: per profile (including `home`), the name-hiding `permissions.deny` entries — each profile lists the OTHER profiles' folders.
+
+`local/forbidden.txt` — one case-insensitive regex per line, `#` comments allowed. List every split name, client/company name, personal folder path fragment, and your own identity strings. `check-clean.ps1` scans tracked and staged file content AND file names against it.
+
 ## Fresh machine install
 
 Prerequisites: Windows 11, PowerShell 7, node, git, Claude Code (`claude.exe` on PATH).
