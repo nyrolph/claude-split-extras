@@ -12,6 +12,7 @@ Upstream is a Go tool for macOS/Linux. These extras began as a Windows PowerShel
 | `statusline/statusline.js` | Status line that works from any profile (honours `CLAUDE_CONFIG_DIR`) and shows the profile name coloured by registry position, model, effort, tokens, context-to-autocompact, task progress, PR number. |
 | `templates/` | The settings fragments every profile needs: the guard hook block, and the shape of a name-hiding deny list. |
 | `scripts/` | `install.ps1` (deploy onto a machine), `sync.ps1` (live copies <-> repo), `check-clean.ps1` (leak guard, wired as pre-commit). |
+| `upstream/` | [bcostea/claude-split](https://github.com/bcostea/claude-split/) as a git submodule, pinned to a known commit — cloning this repo brings the original along. On Windows nothing in it runs (the wrapper replaces it); it is the reference copy for docs, format alignment, and the launcher to build on macOS/Linux. |
 
 ## The privacy model of this repo
 
@@ -53,8 +54,8 @@ Nothing tracked here may contain a split name, a client/company name, or a perso
 
 Prerequisites: Windows 11, PowerShell 7, node, git, Claude Code (`claude.exe` on PATH).
 
-1. Clone this repo anywhere (e.g. `~/claude-split-extras`). Installing upstream itself is not required on Windows — the wrapper replaces it while keeping its on-disk format.
-2. Copy your `local/` sidecar into the clone (skip if starting from scratch).
+1. `git clone --recurse-submodules <this repo's clone URL> ~/claude-split-extras` — the `--recurse-submodules` flag also pulls the original [bcostea/claude-split](https://github.com/bcostea/claude-split/) into `upstream/` (forgot the flag? `git submodule update --init`, or let `install.ps1` do it). Installing upstream separately is not required on Windows — the wrapper replaces it while keeping its on-disk format.
+2. Copy your `local/` sidecar into the clone, and adjust it for this machine if paths differ (see "local/ file formats"). Skip if starting from scratch.
 3. `pwsh -File scripts\install.ps1` — deploys the wrapper, guard, tests and statusline; adds the `$PROFILE` dot-source line; writes `folders.json` + `extras.json` from the sidecar; wires the guard hook and deny lists into every profile whose `settings.json` already exists; installs the repo pre-commit hook.
 4. Open a new shell. Create each split: `cs --split-new <name>`, then `cs --split <name>` from a folder of that split's territory and complete the interactive sign-in. Each profile signs in independently, by design — credentials never sync between machines or profiles.
 5. Re-run `scripts\install.ps1` so the freshly created splits' `settings.json` get the guard hook and their deny lists.
@@ -81,7 +82,9 @@ Deny rules filter Glob/Grep traversal, so a foreign folder is absent from search
 
 Per-profile `.credentials.json` (each machine signs in fresh), the `ide` junctions (the wrapper recreates them), absolute paths inside settings hook commands (`install.ps1` templates them per machine), and any VS Code workspace `terminal.background` tints (per-workspace, per-machine).
 
-## Upstream delta
+## Upstream delta and integration
 
-- Offered upstream: the Windows port concept (issue + PR on [bcostea/claude-split](https://github.com/bcostea/claude-split/)). If upstream merges Windows support, revisit the wrapper: keep the on-disk format aligned (`registry.json`, `folders.json`) so switching or contributing back stays cheap.
-- Local-only (not offered upstream): the isolation guard, name hiding, terminal tinting, launch guards, statusline, seeding exclusions.
+- **The original lives in `upstream/`** as a submodule pinned to a known-good commit. Update the pin deliberately, never implicitly: `git -C upstream pull origin main` (or `git submodule update --remote upstream`), read upstream's changelog for on-disk format changes (`registry.json`, `folders.json` — the wrapper depends on that layout), then commit the new pin.
+- **On macOS/Linux**: use upstream as the launcher (build/install per its own README from `upstream/`); the guard (`split-guard.mjs`), its tests, and the statusline are node and work as-is — only the PowerShell wrapper is Windows-specific. Hook wiring and deny lists follow the same templates.
+- Offered upstream: the Windows port concept (issue + PR on [bcostea/claude-split](https://github.com/bcostea/claude-split/)). If upstream merges Windows support, revisit the wrapper: drop what upstream now covers (launching, registry/pins management), keep the extras it does not (isolation guard wiring, tinting, launch guards, seeding exclusions), and verify the on-disk format still matches before switching.
+- Local-only (not offered upstream): the isolation guard, name hiding, terminal tinting, launch guards, statusline, seeding exclusions. The sanitized copies here are the clean starting point if any of them is ever contributed upstream.

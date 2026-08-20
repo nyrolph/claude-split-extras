@@ -11,6 +11,14 @@ $sidecar = Join-Path $repo 'local\local-config.json'
 $cfg = $null
 if (Test-Path $sidecar) { $cfg = Get-Content $sidecar -Raw | ConvertFrom-Json }
 
+# 0. Upstream reference (bcostea/claude-split) as a git submodule: present when
+# the clone used --recurse-submodules; initialize it here otherwise. Purely a
+# reference copy on Windows - nothing below depends on it.
+if ((Test-Path (Join-Path $repo '.gitmodules')) -and -not (Test-Path (Join-Path $repo 'upstream\README.md'))) {
+  try { git -C $repo submodule update --init 2>&1 | Out-Null; "init  upstream/ submodule" }
+  catch { "skip  upstream/ submodule (git or network unavailable)" }
+} else { "skip  upstream/ submodule (already present)" }
+
 function Deploy([string]$src, [string]$dst) {
   New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null
   if ((Test-Path $dst) -and (Get-FileHash $dst).Hash -eq (Get-FileHash $src).Hash) { "skip  $dst (identical)"; return }
