@@ -1,0 +1,9 @@
+{
+  "_comment": "Name-hiding deny list. In EACH profile's settings.json, list every OTHER profile's protected folders so they vanish from Glob/Grep results. Forward slashes, //<driveletter>/... form, /** for the whole tree; add a second entry for any subst-alias spelling of the same folder. Leave the home profile without a list if home should keep seeing folder names. These rules hot-reload into running sessions.",
+  "permissions": {
+    "deny": [
+      "Read(//d/Clients/Acme/**)",
+      "Read(//x/AliasOfClients/Acme/**)"
+    ]
+  }
+}

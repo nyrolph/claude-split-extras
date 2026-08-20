@@ -1,0 +1,16 @@
+{
+  "_comment": "Reference for merging by hand into a profile's settings.json (~/.claude and each ~/.claude-splits/<name>). {{SPLITS_ROOT}} is the absolute path to ~/.claude-splits with forward slashes. scripts/install.ps1 wires the equivalent block automatically; this file documents the shape.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|NotebookEdit|Glob|Grep|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{SPLITS_ROOT}}/split-guard.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
